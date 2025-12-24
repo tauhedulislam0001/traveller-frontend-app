@@ -1,0 +1,81 @@
+/* Main.css */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
+/* Custom slick carousel styles */
+.slick-slide {
+  padding: 0 8px;
+}
+
+.slick-list {
+  margin: 0 -8px;
+}
+
+.slick-dots {
+  bottom: -40px !important;
+}
+
+.slick-dots li button:before {
+  color: #fb2c36 !important;
+  opacity: 0.3;
+  font-size: 8px;
+}
+
+.slick-dots li.slick-active button:before {
+  color: #fb2c36 !important;
+  opacity: 1;
+}
+
+/* Font classes */
+.font-dancing {
+  font-family: 'Dancing Script', cursive;
+}
+
+/* Custom color for consistency */
+.text-custom-red {
+  color: #fb2c36 !important;
+}
+
+.bg-custom-red {
+  background-color: #fb2c36 !important;
+}
+
+.hover\:bg-custom-red:hover {
+  background-color: #fb2c36 !important;
+}
+
+.hover\:text-custom-red:hover {
+  color: #fb2c36 !important;
+}
+
+.border-custom-red {
+  border-color: #fb2c36 !important;
+}
+
+/* Loading animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .slick-slide {
+    padding: 0 4px;
+  }
+  
+  .slick-list {
+    margin: 0 -4px;
+  }
+}
