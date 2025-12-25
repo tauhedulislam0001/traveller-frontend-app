@@ -30,3 +30,21 @@ export type BlogFeatureResponse = {
     count: number;
     data: Blog[];
 }
+
+export type BlogDetailsRequest = {
+    id :number;
+}
+
+export type BlogDetailsResponse = {
+    status: number;
+    success: boolean;
+    message: string;
+    data: Blog[];
+}
+
+export type BlogRelatedBlogResponse = {
+    status: number;
+    success: boolean;
+    message: string;
+    data: Blog[];
+}

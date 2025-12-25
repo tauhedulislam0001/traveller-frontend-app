@@ -260,7 +260,7 @@ export const Header: React.FC = () => {
 
           <div id="navigation" className={menuOpen ? "block" : "hidden md:block"}>
             <ul className="navigation-menu nav-right !justify-end nav-light">
-              <li className="has-submenu parent-menu-item">
+              {/* <li className="has-submenu parent-menu-item">
                 <a href="#" onClick={handleMenuClick} className="hover:text-[#fb2c36]">Hero</a><span className="menu-arrow"></span>
                 <ul className="submenu">
                   <li><Link href="/" className="sub-menu-item">Tour One</Link></li>
@@ -269,7 +269,10 @@ export const Header: React.FC = () => {
                   <li><a href="index-four.html" className="sub-menu-item">Tour Four</a></li>
                   <li><a href="index-five.html" className="sub-menu-item">Tour Five</a></li>
                 </ul>
-              </li>
+              </li> */}
+
+    
+              <li><Link href="/" className="sub-menu-item hover:text-[#fb2c36]">Home</Link></li>
 
               <li className="has-submenu parent-parent-menu-item">
                 <a href="#" onClick={handleMenuClick} className="hover:text-[#fb2c36]">Listing</a><span className="menu-arrow"></span>
@@ -359,14 +362,7 @@ export const Header: React.FC = () => {
                 </ul>
               </li>
 
-              <li className="has-submenu parent-menu-item">
-                <a href="#" onClick={handleMenuClick} className="hover:text-[#fb2c36]">Blog</a><span className="menu-arrow"></span>
-                <ul className="submenu">
-                  <li><Link href="/blog" className="sub-menu-item">Blogs</Link></li>
-                  <li><a href="blog-standard.html" className="sub-menu-item">Blog Standard</a></li>
-                  <li><Link href="/blog-details" className="sub-menu-item">Blog Detail</Link></li>
-                </ul> 
-              </li>
+              <li><Link href="/blog" className="sub-menu-item hover:text-[#fb2c36]">Blog</Link></li>
 
               <li><Link href="/contact" className="sub-menu-item hover:text-[#fb2c36]">Contact Us</Link></li>
             </ul>
