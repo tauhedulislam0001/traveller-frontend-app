@@ -109,18 +109,18 @@ export const Header: React.FC = () => {
               <ul className="list-none">
                 <li className="inline-flex items-center">
                   <Clock className="size-4" style={{ color: themeColor }} />
-                  <span className="ms-2 text-slate-300">Mon-Sat: 9am to 6pm</span>
+                  <span className="ms-2 text-slate-300">Sat-Fri: 9am to 8pm</span>
                 </li>
                 <li className="inline-flex items-center ms-2">
                   <MapPin className="size-4" style={{ color: themeColor }} />
-                  <span className="ms-2 text-slate-300">Houston, USA 485</span>
+                  <span className="ms-2 text-slate-300">Grand Plaza, 2nd floor, Wireless, Moghbazar</span>
                 </li>
               </ul>
 
               <ul className="list-none">
                 <li className="inline-flex items-center">
                   <Mail className="size-4" style={{ color: themeColor }} />
-                  <a href="mailto:contact@example.com" className="ms-2 text-slate-300 hover:text-slate-200">contact@example.com</a>
+                  <a href="mailto:travellerbdofficial@gmail.com" className="ms-2 text-slate-300 hover:text-slate-200">travellerbdofficial@gmail.com</a>
                 </li>
                 <li className="inline-flex items-center ms-2">
                   <ul className="list-none">
@@ -273,8 +273,9 @@ export const Header: React.FC = () => {
 
     
               <li><Link href="/" className="sub-menu-item hover:text-[#fb2c36]">Home</Link></li>
+              <li><Link href="/tour-package" className="sub-menu-item hover:text-[#fb2c36]">Tour Package</Link></li>
 
-              <li className="has-submenu parent-parent-menu-item">
+              {/* <li className="has-submenu parent-parent-menu-item">
                 <a href="#" onClick={handleMenuClick} className="hover:text-[#fb2c36]">Listing</a><span className="menu-arrow"></span>
                 <ul className="submenu">
                   <li className="has-submenu parent-menu-item">
@@ -303,7 +304,7 @@ export const Header: React.FC = () => {
                     </ul>  
                   </li>
                 </ul>
-              </li>
+              </li> */}
           
               <li className="has-submenu parent-parent-menu-item">
                 <a href="#" onClick={handleMenuClick} className="hover:text-[#fb2c36]">Pages</a><span className="menu-arrow"></span>

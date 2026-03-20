@@ -1,115 +1,466 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
+interface PricingOption {
+    cost_type: string;
+    type_label: string;
+    person_count?: number | null;
+    regular_amount: number;
+    final_amount: number;
+    formatted_regular: string;
+    formatted_final: string;
+    has_discount: boolean;
+    discount_amount?: number | null;
+    saved_amount?: number;
+    saved_percent?: number;
+    formatted_saved?: string | null;
+    total_price?: number;
+    formatted_total?: string;
+}
 
-function TourDetailsBookNow() {
+interface Props {
+    pricing?: PricingOption[];
+    price?: string | null;
+    duration?: string;
+    tourId: number;
+    tourTitle: string;
+}
+
+const TourDetailsBookNow: React.FC<Props> = ({ 
+    pricing = [], 
+    price, 
+    duration, 
+    tourId, 
+    tourTitle 
+}) => {
     const [isMounted, setIsMounted] = useState(false);
+    const [selectedTourType, setSelectedTourType] = useState<string>('');
+    const [selectedGroupSize, setSelectedGroupSize] = useState<number>(0);
+    const [selectedPricing, setSelectedPricing] = useState<PricingOption | null>(null);
     const [adultCount, setAdultCount] = useState(1);
-    const [childCount, setChildCount] = useState(0);
+    const [customGroupSize, setCustomGroupSize] = useState<number>(1);
+    const [selectedDate, setSelectedDate] = useState('');
+    const [notes, setNotes] = useState('');
+    const [manualInputValue, setManualInputValue] = useState('1');
+    const [customManualInput, setCustomManualInput] = useState('1');
+    const dateInputRef = useRef<HTMLInputElement>(null);
+
+    // Group options from pricing
+    const groupOptions = pricing.filter(p => p.cost_type === 'group_tour');
+    const perPersonOption = pricing.find(p => p.cost_type === 'per_person');
 
     useEffect(() => {
         setIsMounted(true);
-    }, []);
+    }, [pricing]);
 
-    const incrementAdult = () => setAdultCount(prev => prev + 1);
-    const decrementAdult = () => setAdultCount(prev => prev > 1 ? prev - 1 : 1);
-    
-    const incrementChild = () => setChildCount(prev => prev + 1);
-    const decrementChild = () => setChildCount(prev => prev > 0 ? prev - 1 : 0);
+    // Handle tour type change
+    const handleTourTypeChange = (type: string) => {
+        setSelectedTourType(type);
+        
+        if (type === 'per_person' && perPersonOption) {
+            setSelectedPricing(perPersonOption);
+            setSelectedGroupSize(0);
+        } else if (type === 'group_tour' && groupOptions.length > 0) {
+            const firstGroup = groupOptions[0];
+            setSelectedGroupSize(firstGroup.person_count || 0);
+            setSelectedPricing(firstGroup);
+        } else {
+            setSelectedPricing(null);
+            setSelectedGroupSize(0);
+        }
+    };
+
+    // Handle group size change
+    const handleGroupSizeChange = (personCount: number) => {
+        setSelectedGroupSize(personCount);
+        
+        if (personCount === -1) {
+            // Custom option selected - use the custom group size value
+            handleCustomGroupSizeChange(customGroupSize);
+        } else {
+            const selectedGroup = groupOptions.find(g => g.person_count === personCount);
+            if (selectedGroup) {
+                setSelectedPricing(selectedGroup);
+            }
+        }
+    };
+
+    // Handle custom group size change
+    const handleCustomGroupSizeChange = (value: number) => {
+        const newCount = Math.max(1, Math.min(500, value));
+        setCustomGroupSize(newCount);
+        setCustomManualInput(newCount.toString());
+        
+        // Find the base pricing (use the first group option as reference)
+        if (groupOptions.length > 0) {
+            const basePricing = groupOptions[0];
+            // Calculate custom price based on per person rate
+            const pricePerPerson = basePricing.final_amount;
+            const totalPrice = pricePerPerson * newCount;
+            
+            setSelectedPricing({
+                ...basePricing,
+                person_count: newCount,
+                total_price: totalPrice,
+                formatted_total: '$' + totalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            });
+        }
+    };
+
+    const handleCustomManualInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setCustomManualInput(value);
+        const numValue = parseInt(value);
+        if (!isNaN(numValue)) {
+            handleCustomGroupSizeChange(numValue);
+        }
+    };
+
+    // Handle adult count change
+    const handleAdultCountChange = (value: number) => {
+        const newCount = Math.max(1, Math.min(100, value));
+        setAdultCount(newCount);
+        setManualInputValue(newCount.toString());
+    };
+
+    const handleManualInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setManualInputValue(value);
+        const numValue = parseInt(value);
+        if (!isNaN(numValue)) {
+            handleAdultCountChange(numValue);
+        }
+    };
+
+    const openDatePicker = () => {
+        if (dateInputRef.current) {
+            dateInputRef.current.showPicker();
+        }
+    };
 
     if (!isMounted) {
         return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
-            <div className="text-center">
-            <div className="w-16 h-16 border-4 border-gray-300 border-t-custom-red rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading Tour Details...</p>
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+                <div className="animate-pulse space-y-4">
+                    <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                </div>
             </div>
-        </div>
         );
     }
+
+    // Calculate total amount
+    const getTotalAmount = () => {
+        if (!selectedPricing) return '0.00';
+        
+        if (selectedTourType === 'group_tour') {
+            if (selectedGroupSize === -1) {
+                // Custom group
+                return selectedPricing.formatted_total || '$0.00';
+            } else if (selectedPricing.total_price) {
+                return selectedPricing.formatted_total || '$0.00';
+            }
+        }
+        
+        const priceNum = selectedPricing.final_amount;
+        return `$${(adultCount * priceNum).toFixed(2)}`;
+    };
+
+    // Check if book button should be enabled
+    const isBookButtonEnabled = () => {
+        return selectedTourType !== '' && selectedPricing !== null && selectedDate !== '';
+    };
+
+    // Get price per person display
+    const getPricePerPerson = () => {
+        if (!selectedPricing) return '';
+        return selectedPricing.formatted_final;
+    };
+
+    // Get the base price per person for group tours
+    const getBasePricePerPerson = () => {
+        if (groupOptions.length > 0) {
+            return groupOptions[0].formatted_final;
+        }
+        return '';
+    };
+
     return (
-        <div className="lg:col-span-4 md:col-span-5">
-            <div className="p-4 rounded-md shadow-sm dark:shadow-gray-700 sticky top-20 bg-white dark:bg-slate-900">
-            {/* Date Picker */}
-            <div>
-                <label className="font-semibold block mb-2">Date:</label>
-                <input
-                type="date"
-                className="mt-2 w-full py-2 px-3 h-10 bg-transparent dark:bg-slate-900 dark:text-slate-200 rounded outline-none border border-gray-200 dark:border-gray-800 focus:border-custom-red focus:ring-1 focus:ring-custom-red transition-colors"
-                />
-            </div>
-
-            {/* Person Counter */}
-            <div className="mt-4">
-                <div className="md:flex items-center justify-between">
-                <div className="mb-4 md:mb-0">
-                    <span className="font-medium">Adult:</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                    <button
-                    type="button"
-                    onClick={decrementAdult}
-                    className="size-10 flex items-center justify-center border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                    <span className="text-lg">-</span>
-                    </button>
-                    <span className="font-semibold text-lg min-w-[2rem] text-center">{adultCount}</span>
-                    <button
-                    type="button"
-                    onClick={incrementAdult}
-                    className="size-10 flex items-center justify-center border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                    <span className="text-lg">+</span>
-                    </button>
-                </div>
-                </div>
-                
-                <div className="md:flex items-center justify-between mt-4">
-                <div className="mb-4 md:mb-0">
-                    <span className="font-medium">Child:</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                    <button
-                    type="button"
-                    onClick={decrementChild}
-                    className="size-10 flex items-center justify-center border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                    <span className="text-lg">-</span>
-                    </button>
-                    <span className="font-semibold text-lg min-w-[2rem] text-center">{childCount}</span>
-                    <button
-                    type="button"
-                    onClick={incrementChild}
-                    className="size-10 flex items-center justify-center border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                    <span className="text-lg">+</span>
-                    </button>
-                </div>
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-24 border border-gray-100">
+            {/* Premium Header */}
+            <div className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-custom-red via-red-500 to-custom-red opacity-90"></div>
+                <div className="relative p-6 text-center">
+                    <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-white text-xs font-semibold tracking-wider mb-2">
+                        BOOK YOUR ADVENTURE
+                    </span>
+                    <h3 className="text-2xl font-bold text-white mb-1">Book This Tour</h3>
+                    <p className="text-white/80 text-sm">Secure your spot with 20% deposit</p>
                 </div>
             </div>
 
-            {/* Search Button */}
-            <div className="mt-6">
-                <button className="py-3 px-5 inline-block tracking-wide align-middle duration-500 text-base text-center bg-custom-red hover:bg-red-600 text-white rounded-md w-full font-medium transition-colors">
-                Book Now
+            {/* Booking Form */}
+            <div className="p-6 space-y-5">
+                {/* Tour Type Selection */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                        Select Tour Type
+                    </label>
+                    <select
+                        value={selectedTourType}
+                        onChange={(e) => handleTourTypeChange(e.target.value)}
+                        className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all cursor-pointer"
+                    >
+                        <option value="">Select Tour Type</option>
+                        {perPersonOption && (
+                            <option value="per_person">Per Person Tour</option>
+                        )}
+                        {groupOptions.length > 0 && (
+                            <option value="group_tour">Group Tour</option>
+                        )}
+                    </select>
+                </div>
+
+                {/* Group Size Selection (only for group tours) */}
+                {selectedTourType === 'group_tour' && groupOptions.length > 0 && (
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                            Group Size
+                        </label>
+                        <select
+                            value={selectedGroupSize}
+                            onChange={(e) => handleGroupSizeChange(Number(e.target.value))}
+                            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all cursor-pointer"
+                        >
+                            {groupOptions.map((option) => (
+                                <option key={option.person_count} value={option.person_count || 0}>
+                                    {option.person_count} Persons
+                                    {option.has_discount && ` (Save ${option.formatted_saved})`}
+                                </option>
+                            ))}
+                            <option value="-1">Custom</option>
+                        </select>
+                        
+                        {/* Custom Group Size Input */}
+                        {selectedGroupSize === -1 && (
+                            <div className="mt-3">
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                onClick={() => handleCustomGroupSizeChange(customGroupSize - 1)} 
+                                                className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
+                                                disabled={customGroupSize <= 1}
+                                            >
+                                                <span className="text-xl font-medium">−</span>
+                                            </button>
+                                            <input
+                                                type="text"
+                                                value={customManualInput}
+                                                onChange={handleCustomManualInput}
+                                                className="w-20 text-center font-semibold text-lg text-gray-900 bg-transparent focus:outline-none"
+                                            />
+                                            <button 
+                                                onClick={() => handleCustomGroupSizeChange(customGroupSize + 1)} 
+                                                className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
+                                            >
+                                                <span className="text-xl font-medium">+</span>
+                                            </button>
+                                        </div>
+                                        <span className="text-sm text-gray-500">
+                                            Total: ${(selectedPricing?.final_amount || 0 * customGroupSize).toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Base price per person: {getBasePricePerPerson()}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Price Display */}
+                {selectedTourType !== '' && selectedPricing && (
+                    <div className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-4 border border-gray-100">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Price per person:</span>
+                            <div className="text-right">
+                                {selectedPricing.has_discount ? (
+                                    <div>
+                                        <span className="text-sm line-through text-gray-400 mr-2">
+                                            {selectedPricing.formatted_regular}
+                                        </span>
+                                        <span className="text-xl font-bold text-custom-red">
+                                            {selectedPricing.formatted_final}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <span className="text-xl font-bold text-custom-red">
+                                        {selectedPricing.formatted_final}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        {selectedPricing.has_discount && (
+                            <div className="mt-2 text-sm text-green-600">
+                                You save: {selectedPricing.formatted_saved} ({selectedPricing.saved_percent}% off)
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Adult Counter (only for per person tours) */}
+                {selectedTourType === 'per_person' && (
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                            Adults (Age 12+)
+                        </label>
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={() => handleAdultCountChange(adultCount - 1)} 
+                                        className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
+                                        disabled={adultCount <= 1}
+                                    >
+                                        <span className="text-xl font-medium">−</span>
+                                    </button>
+                                    <input
+                                        type="text"
+                                        value={manualInputValue}
+                                        onChange={handleManualInput}
+                                        className="w-20 text-center font-semibold text-lg text-gray-900 bg-transparent focus:outline-none"
+                                    />
+                                    <button 
+                                        onClick={() => handleAdultCountChange(adultCount + 1)} 
+                                        className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
+                                    >
+                                        <span className="text-xl font-medium">+</span>
+                                    </button>
+                                </div>
+                                <span className="text-sm text-gray-500">
+                                    Total: ${(selectedPricing?.final_amount || 0 * adultCount).toFixed(2)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Date Selection */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                        Travel Date
+                    </label>
+                    <input
+                        ref={dateInputRef}
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all cursor-pointer"
+                        min={new Date().toISOString().split('T')[0]}
+                    />
+                </div>
+
+                {/* Notes Field - For both per person and group tours */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700">
+                        Special Requests / Notes
+                    </label>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={3}
+                        className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all resize-none"
+                        placeholder="Any special requests or notes for your tour..."
+                    />
+                </div>
+
+                {/* Total Amount */}
+                {selectedTourType !== '' && selectedPricing && (
+                    <div className="border-t border-gray-200 pt-4">
+                        <div className="flex justify-between items-center">
+                            <span className="text-base font-semibold text-gray-900">Total Amount</span>
+                            <span className="text-2xl font-bold text-custom-red">
+                                {getTotalAmount()}
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Includes all taxes & fees</p>
+                    </div>
+                )}
+
+                {/* Book Now Button */}
+                <button 
+                    disabled={!isBookButtonEnabled()}
+                    className={`w-full py-4 bg-gradient-to-r from-custom-red to-red-600 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-custom-red/20 flex items-center justify-center gap-2 group ${
+                        !isBookButtonEnabled() ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''
+                    }`}
+                >
+                    <span>Book Now{selectedPricing ? ` - ${getTotalAmount()}` : ''}</span>
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                 </button>
-            </div>
+                
+                {/* Validation Messages */}
+                {!selectedTourType && (
+                    <p className="text-xs text-amber-600 text-center">
+                        Please select a tour type to continue
+                    </p>
+                )}
+                {selectedTourType && !selectedDate && (
+                    <p className="text-xs text-amber-600 text-center">
+                        Please select a travel date to continue
+                    </p>
+                )}
 
-            {/* Tour Map */}
-            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <h5 className="text-lg font-medium mb-3">Tour Map</h5>
-                <div className="mt-3">
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d39206.002432144705!2d-95.4973981212445!3d29.709510002925988!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8640c16de81f3ca5%3A0xf43e0b60ae539ac9!2sGerald+D.+Hines+Waterwall+Park!5e0!3m2!1sen!2sin!4v1566305861440!5m2!1sen!2sin"
-                    className="w-full h-64 rounded-lg border-0"
-                    allowFullScreen
-                    loading="lazy"
-                    title="Tour Map"
-                />
+                {/* Trust Badges */}
+                <div className="flex items-center justify-center gap-4 pt-2">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Secure Payment</span>
+                    </div>
+                    <div className="w-px h-4 bg-gray-200"></div>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg className="w-4 h-4 text-custom-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Best Price</span>
+                    </div>
+                    <div className="w-px h-4 bg-gray-200"></div>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg className="w-4 h-4 text-custom-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span>Free Cancellation</span>
+                    </div>
                 </div>
             </div>
+
+            {/* Need Help Section */}
+            <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-custom-red/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-custom-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <h5 className="font-semibold text-gray-900">Need help booking?</h5>
+                        <p className="text-sm text-gray-500 mt-0.5">Our travel experts are here 24/7</p>
+                        <button className="mt-2 text-custom-red hover:text-red-600 font-medium text-sm inline-flex items-center gap-1">
+                            Contact Support
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default TourDetailsBookNow
+export default TourDetailsBookNow;

@@ -18,21 +18,30 @@ export const BlogApi = createApi({
       query: () => `${Constants.MAIN_URL_API_ENDPOINT}blog/featured`,
     }),
 
-    // Get blog details by id - FIXED
+    // Search Blogs
+    searchBlogs: builder.query<BlogResponse, { search: string }>({
+      query: (params) => ({
+        url: `${Constants.MAIN_URL_API_ENDPOINT}blog/search`,
+        method: 'POST',
+        body: params,
+      }),
+    }),
+
+    // Get blog details by id
     getBlogById: builder.query<BlogDetailsResponse, BlogDetailsRequest>({
       query: (data) => ({
         url: `${Constants.MAIN_URL_API_ENDPOINT}blog/details`,
         method: 'POST',
-        body: data, // This sends as form-data
+        body: data,
       }),
     }),
 
-    // Get related blog by id - FIXED
+    // Get related blog by id
     getRelatedBlog: builder.query<BlogRelatedBlogResponse, BlogDetailsRequest>({
       query: (data) => ({
         url: `${Constants.MAIN_URL_API_ENDPOINT}blog/related`,
         method: 'POST',
-        body: data, // This sends as form-data
+        body: data,
       }),
     }),
   }),
@@ -41,6 +50,7 @@ export const BlogApi = createApi({
 export const {
     useGetBlogsQuery,
     useGetBlogFeaturesQuery,
+    useSearchBlogsQuery,
     useGetBlogByIdQuery,
     useGetRelatedBlogQuery,
 } = BlogApi;

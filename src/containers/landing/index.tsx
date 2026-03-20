@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Import custom CSS for your component
-import "./Main.module.css"; // Create this file for custom styles
+import "./Main.module.css";
 import TourPackage from "@components/main/sections/tour_packages/tour_packages";
 import BookingForm from "@components/main/sections/booking_form/booking_form";
 import HeroSection from "@components/main/sections/hero_section/hero_section";
@@ -14,13 +14,20 @@ import AboutSection from "@components/main/sections/about/about";
 import Testimonial from "@components/main/sections/Testimonial/testimonial";
 import BlogSection from "@components/main/sections/blog/blog_section";
 import { BlogFeatureResponse } from "@redux/services/blog/type";
+import { TourPackageFeatureResponse, TourPackageTopDestinationResponse } from "@redux/services/tour_package/type";
 
-const Landing: React.FC<{ blogFeaturedData?: BlogFeatureResponse }> = ({ blogFeaturedData }) => {
+interface LandingProps {
+    blogFeaturedData?: BlogFeatureResponse;
+    tourFeaturedData?: TourPackageFeatureResponse;
+    tourTopDestinationData?: TourPackageTopDestinationResponse;
+}
+
+const Landing: React.FC<LandingProps> = ({ blogFeaturedData, tourFeaturedData, tourTopDestinationData }) => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-  });
+  }, []);
 
   // Show loading state while component is mounting
   if (!isMounted) {
@@ -44,10 +51,10 @@ const Landing: React.FC<{ blogFeaturedData?: BlogFeatureResponse }> = ({ blogFea
 
       {/* Top Destinations Slider */}
       <section className="relative md:py-24 py-16 overflow-hidden bg-gray-50 dark:bg-slate-900">
-        <Destination />
+        <Destination data={tourTopDestinationData}/>
 
         {/* Tours Packages */}
-        <TourPackage />
+        <TourPackage data={tourFeaturedData}/>
 
         {/* About Section */}
         <AboutSection />        
