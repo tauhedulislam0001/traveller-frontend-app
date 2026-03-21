@@ -38,8 +38,10 @@ export const Header: React.FC = () => {
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  // Get authentication state from Redux
-  const { isAuthenticated, customer } = useSelector((state: RootState) => state.auth);
+  // Get authentication state from Redux with safe default
+  const auth = useSelector((state: RootState) => state.auth);
+  const isAuthenticated = auth?.isAuthenticated || false;
+  const customer = auth?.customer || null;
   
   const [logout] = useLogoutMutation();
 
@@ -56,13 +58,11 @@ export const Header: React.FC = () => {
 
   const toggleSearchDropdown = () => {
     setSearchDropdownOpen(!searchDropdownOpen);
-    // Close profile dropdown if open
     if (profileDropdownOpen) setProfileDropdownOpen(false);
   };
 
   const toggleProfileDropdown = () => {
     setProfileDropdownOpen(!profileDropdownOpen);
-    // Close search dropdown if open
     if (searchDropdownOpen) setSearchDropdownOpen(false);
   };
 
@@ -74,7 +74,6 @@ export const Header: React.FC = () => {
       router.push('/');
     } catch (error) {
       console.error('Logout failed:', error);
-      // Still clear local state even if API call fails
       dispatch(clearCredentials());
       router.push('/');
     }
@@ -113,17 +112,13 @@ export const Header: React.FC = () => {
     }
   };
 
-  // Add scroll event listener
   useEffect(() => {
     window.addEventListener("scroll", handleWindowScroll);
-    
-    // Clean up the event listener
     return () => {
       window.removeEventListener("scroll", handleWindowScroll);
     };
   }, []);
 
-  // Also check on initial load
   useEffect(() => {
     handleWindowScroll();
   }, []);
@@ -247,9 +242,9 @@ export const Header: React.FC = () => {
                 >
                   <span className="size-8 inline-flex items-center justify-center tracking-wide align-middle duration-500 text-base text-center rounded-md border" style={{ borderColor: themeColor, backgroundColor: themeColor }}>
                     {customer?.profile_image ? (
-                      <img src={customer.profile_image} className="rounded-md w-full h-full object-cover" alt={customer.full_name} />
+                      <img src={customer.profile_image} className="rounded-md" alt={customer.full_name} />
                     ) : (
-                      <User className="size-4 text-white" />
+                      <img src="assets/images/client/16.jpg" className="rounded-md" alt="" />
                     )}
                   </span>
                 </button>
@@ -259,27 +254,33 @@ export const Header: React.FC = () => {
                 >
                   <ul className="py-2 text-start">
                     <li>
-                      <Link href="/profile" className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white">
-                        <User className="size-4 me-2" style={{ color: themeColor }} />
-                        Profile
+                      <Link href="/profile">
+                        <div className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white cursor-pointer">
+                          <User className="size-4 me-2" style={{ color: themeColor }} />
+                          Profile
+                        </div>
                       </Link>
                     </li>
                     <li>
-                      <Link href="/helpcenter" className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white">
-                        <HelpCircle className="size-4 me-2" style={{ color: themeColor }} />
-                        Helpcenter
+                      <Link href="/helpcenter">
+                        <div className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white cursor-pointer">
+                          <HelpCircle className="size-4 me-2" style={{ color: themeColor }} />
+                          Helpcenter
+                        </div>
                       </Link>
                     </li>
                     <li>
-                      <Link href="/settings" className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white">
-                        <Settings className="size-4 me-2" style={{ color: themeColor }} />
-                        Settings
+                      <Link href="/settings">
+                        <div className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white cursor-pointer">
+                          <Settings className="size-4 me-2" style={{ color: themeColor }} />
+                          Settings
+                        </div>
                       </Link>
                     </li>
                     <li className="border-t border-gray-100 dark:border-gray-800 my-2"></li>
                     <li>
                       <button onClick={handleLogout} className="w-full text-left">
-                        <div className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white">
+                        <div className="flex items-center font-medium py-2 px-4 dark:text-white/70 hover:text-[#fb2c36] dark:hover:text-white cursor-pointer">
                           <LogOut className="size-4 me-2" style={{ color: themeColor }} />
                           Logout
                         </div>
@@ -310,7 +311,7 @@ export const Header: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation Bar - Professional App Style */}
+      {/* Mobile Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 shadow-lg lg:hidden z-50">
         <div className="flex items-center justify-around py-2">
           <Link href="/" className="flex flex-col items-center py-1 px-3">
@@ -359,7 +360,6 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Add padding bottom on mobile to prevent content from being hidden behind bottom nav */}
       <style jsx global>{`
         @media (max-width: 1023px) {
           body {

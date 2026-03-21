@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { useLoginMutation } from "@redux/services/auth/api";
-import { setCredentials } from "@redux/slices/authSlice";
 import toast from "react-hot-toast";
 
 const Signin: React.FC = () => {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [isMounted, setIsMounted] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -137,6 +134,7 @@ const Signin: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // UPDATED: Removed dispatch(setCredentials) since API handles it
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -152,17 +150,8 @@ const Signin: React.FC = () => {
       }).unwrap();
       
       if (result.success && result.data) {
-        // Save to Redux store
-        dispatch(setCredentials({
-          customer: result.data.customer,
-          accessToken: result.data.access_token,
-          refreshToken: result.data.refresh_token,
-        }));
-        
-        // Show success message
+        // The onQueryStarted in the API already sets credentials in Redux and localStorage
         toast.success('Login successful!');
-        
-        // Redirect to home or dashboard
         router.push('/');
       }
     } catch (error: any) {
@@ -251,32 +240,6 @@ const Signin: React.FC = () => {
                     {errors.password && (
                       <p className="text-red-500 text-xs mt-1">{errors.password}</p>
                     )}
-                  </div>
-
-                  {/* TV Code Field (Optional - for extra security) */}
-                  <div className="mb-4">
-                    <label className="font-semibold" htmlFor="TvCode">
-                      TV Code (Optional):
-                    </label>
-                    <input 
-                      id="TvCode" 
-                      name="tv_code"
-                      type="text" 
-                      value={formData.tv_code}
-                      onChange={handleInputChange}
-                      className={`mt-3 w-full py-2 px-3 h-10 bg-transparent dark:bg-slate-900 dark:text-slate-200 rounded outline-none border ${
-                        errors.tv_code ? 'border-red-500' : 'border-gray-100 dark:border-gray-800'
-                      } focus:ring-0 focus:border-red-500`}
-                      placeholder="Enter TV code (if required)"
-                      disabled={isLoading}
-                      maxLength={10}
-                    />
-                    {errors.tv_code && (
-                      <p className="text-red-500 text-xs mt-1">{errors.tv_code}</p>
-                    )}
-                    <p className="text-gray-400 text-xs mt-1">
-                      Optional: Enter your TV code for additional security
-                    </p>
                   </div>
 
                   {/* Remember Me & Forgot Password */}
