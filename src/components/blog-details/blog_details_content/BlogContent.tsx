@@ -1,4 +1,3 @@
-// @components/blog-details/blog_details_content/BlogContent.tsx
 import React, { useEffect } from "react";
 
 interface BlogContentProps {
@@ -31,20 +30,15 @@ function BlogContent({ blogData }: BlogContentProps) {
   const blogDetails = blogData ? {
     title: blogData.title,
     category: blogData.category_name || "Uncategorized",
-    image: blogData.featured_image,
+    image: blogData.featured_image || blogData.feature_image,
     author: blogData.created_by_name || "Author",
     authorImage: "/assets/images/client/05.jpg",
     date: blogData.created_at_formatted || "Unknown date",
     readTime: blogData.duration ? `${blogData.duration} Min Read` : "5 Min Read",
-    views: blogData.views || "0",
-    comments: 94, // You might want to add this to your API
-    content: blogData.description ? [blogData.description] : [
-      "The most well-known dummy text is the 'Lorem Ipsum', which is said to have originated in the 16th century.",
-      "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form.",
-      "The advantage of its Latin origin and the relative meaninglessness of Lorum Ipsum is that the text does not attract attention to itself."
-    ],
-    authorBio: `${blogData.created_by_name} is a passionate travel writer and photographer who has visited over 50 countries. She specializes in adventure travel and landscape photography, capturing breathtaking moments from around the world.`,
-    authorRole: "Content Writer"
+    views: blogData.views_formatted || blogData.views?.toString() || "0",
+    comments: 94,
+    // HTML content for rendering
+    htmlContent: blogData.description || "",
   } : {
     title: "Traveller Visiting Ice Cave With Amazing Eye-catching Scenes",
     category: "Photography",
@@ -55,13 +49,22 @@ function BlogContent({ blogData }: BlogContentProps) {
     readTime: "8 Min Read",
     views: "3.9k",
     comments: 94,
-    content: [
-      "The most well-known dummy text is the 'Lorem Ipsum', which is said to have originated in the 16th century.",
-      "There are many variations of passages of Lorem Ipsum available.",
-      "The advantage of its Latin origin and the relative meaninglessness of Lorum Ipsum."
-    ],
+    htmlContent: `
+      <p>From snow-capped mountains to pristine beaches, explore the natural wonders of New Zealand's South Island.</p>
+      <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.</p>
+    `,
     authorBio: "Cristina Romsey is a passionate travel writer and photographer who has visited over 50 countries.",
     authorRole: "Content Writer"
+  };
+
+  // Function to clean up and sanitize HTML (optional)
+  const cleanHtml = (html: string) => {
+    if (!html) return '';
+    
+    // Remove duplicate content if needed - you might want to implement logic here
+    // For now, just return the HTML
+    
+    return html;
   };
 
   return (
@@ -119,83 +122,118 @@ function BlogContent({ blogData }: BlogContentProps) {
         {blogDetails.title}
       </h1>
 
-      {/* Blog Content */}
-      <div className="space-y-6">
-        {blogDetails.content.map((paragraph, index) => (
-          <p key={index} className="text-slate-600 dark:text-slate-400 leading-relaxed">
-            {paragraph}
-          </p>
-        ))}
-        
-        {/* Quote Section */}
-        <div className="italic border-l-4 my-8 p-6 rounded-r-xl bg-gray-50 dark:bg-slate-800"
-              style={{ borderColor: themeColor }}>
-          <p className="text-slate-600 dark:text-slate-400 text-lg">
-            "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable."
-          </p>
-        </div>
-      </div>
+      {/* Blog Content - Render HTML safely */}
+      <div 
+        className="blog-content prose prose-lg max-w-none dark:prose-invert prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-a:text-[#fb2c36] prose-strong:text-slate-900 dark:prose-strong:text-white"
+        dangerouslySetInnerHTML={{ __html: cleanHtml(blogDetails.htmlContent) }}
+      />
       
+      {/* Optional: Add custom styles for blog content */}
+      <style jsx global>{`
+        .blog-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.75rem;
+          margin: 2rem 0;
+        }
+        
+        .blog-content p {
+          margin-bottom: 1.5rem;
+          line-height: 1.8;
+        }
+        
+        .blog-content h2 {
+          font-size: 1.8rem;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
+          font-weight: 700;
+        }
+        
+        .blog-content h3 {
+          font-size: 1.5rem;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          font-weight: 600;
+        }
+        
+        .blog-content ul, .blog-content ol {
+          margin: 1.5rem 0;
+          padding-left: 2rem;
+        }
+        
+        .blog-content li {
+          margin-bottom: 0.5rem;
+        }
+        
+        .blog-content blockquote {
+          border-left: 4px solid #fb2c36;
+          margin: 2rem 0;
+          padding: 1rem 0 1rem 2rem;
+          font-style: italic;
+          background-color: rgba(251, 44, 54, 0.05);
+          border-radius: 0 0.75rem 0.75rem 0;
+        }
+      `}</style>
 
-            {/* Comment Form */}
-        <div className="mt-12 p-6 rounded-xl shadow-lg dark:shadow-gray-800 border border-gray-200 dark:border-slate-700">
+      {/* Comment Form */}
+      <div className="mt-12 p-6 rounded-xl shadow-lg dark:shadow-gray-800 border border-gray-200 dark:border-slate-700">
         <h5 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-            Leave A Comment:
+          Leave A Comment:
         </h5>
 
         <form className="space-y-6">
-            <div className="grid lg:grid-cols-12 lg:gap-6">
+          <div className="grid lg:grid-cols-12 lg:gap-6">
             <div className="lg:col-span-6">
-                <div className="text-left">
+              <div className="text-left">
                 <label htmlFor="name" className="font-semibold text-slate-900 dark:text-white block mb-2">
-                    Your Name:
+                  Your Name:
                 </label>
                 <input 
-                    id="name" 
-                    type="text" 
-                    className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300"
-                    placeholder="Name"
+                  id="name" 
+                  type="text" 
+                  className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300"
+                  placeholder="Name"
                 />
-                </div>
+              </div>
             </div>
 
             <div className="lg:col-span-6">
-                <div className="text-left">
+              <div className="text-left">
                 <label htmlFor="email" className="font-semibold text-slate-900 dark:text-white block mb-2">
-                    Your Email:
+                  Your Email:
                 </label>
                 <input 
-                    id="email" 
-                    type="email" 
-                    className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300"
-                    placeholder="Email"
+                  id="email" 
+                  type="email" 
+                  className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300"
+                  placeholder="Email"
                 />
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
 
-            <div>
+          <div>
             <div className="text-left">
-                <label htmlFor="comments" className="font-semibold text-slate-900 dark:text-white block mb-2">
+              <label htmlFor="comments" className="font-semibold text-slate-900 dark:text-white block mb-2">
                 Your Comment:
-                </label>
-                <textarea 
+              </label>
+              <textarea 
                 id="comments" 
                 className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300 h-36"
                 placeholder="Your comment..."
-                ></textarea>
+              ></textarea>
             </div>
-            </div>
-            
-            <button 
+          </div>
+          
+          <button 
             type="submit" 
             className="w-full py-3 px-5 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
             style={{ backgroundColor: themeColor, color: 'white' }}
-            >
+          >
             Send Message
-            </button>
+          </button>
         </form>
-        </div>
+      </div>
     </div>
   );
 }

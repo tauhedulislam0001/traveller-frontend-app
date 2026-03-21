@@ -7,7 +7,10 @@ import {
     TourPackageDetailsRequest,
     TourPackageDetailsResponse,
     TourPackageRelatedResponse,
-    TourPackageFilterOptionsResponse
+    TourPackageFilterOptionsResponse,
+    BookingSearchResponse,
+    BookingSearchRequest,
+    TourPackageTopDestinationResponse
 } from "./type";
 
 export const TourPackageApi = createApi({
@@ -88,6 +91,15 @@ export const TourPackageApi = createApi({
                 method: 'GET',
             }),
         }),
+
+        // Search Booking - POST request
+        searchBooking: builder.query<BookingSearchResponse, BookingSearchRequest>({
+            query: (params) => ({
+                url: `${Constants.MAIN_URL_API_ENDPOINT}tour-package/booking-search`,
+                method: 'POST',
+                body: params,
+            }),
+        }),
     }),
 });
 
@@ -98,4 +110,6 @@ export const {
     useGetTourPackageByIdQuery,
     useGetRelatedTourPackageQuery,
     useGetTourPackageFilterOptionsQuery,
+    useSearchBookingQuery,
+    useLazySearchBookingQuery,
 } = TourPackageApi;

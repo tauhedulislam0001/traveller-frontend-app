@@ -239,3 +239,18 @@ export type TourPackageFilterOptionsResponse = {
         total_packages: number;
     };
 }
+
+export type BookingSearchRequest = {
+    package_type?: string; // Search by package type
+    title?: string; // Search by title
+    duration_type?: string; // Search by duration type (day/night)
+    duration?: number; // Search by duration
+};
+
+export type BookingSearchResponse = {
+    status: number;
+    success: boolean;
+    message: string;
+    count: number;
+    data: TourPackage[];
+};
