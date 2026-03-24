@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import React, { useState, useEffect } from "react";
 import { useLoginMutation } from "@redux/services/auth/api";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "react-feather";
 
 const Signin: React.FC = () => {
   const router = useRouter();
@@ -10,10 +11,10 @@ const Signin: React.FC = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    tv_code: "",
     remember: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const [login, { isLoading }] = useLoginMutation();
 
@@ -111,6 +112,10 @@ const Signin: React.FC = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
@@ -126,15 +131,10 @@ const Signin: React.FC = () => {
       newErrors.password = 'Password must be at least 6 characters';
     }
     
-    if (formData.tv_code && formData.tv_code.length !== 10) {
-      newErrors.tv_code = 'TV code must be exactly 10 characters';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // UPDATED: Removed dispatch(setCredentials) since API handles it
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -146,7 +146,6 @@ const Signin: React.FC = () => {
       const result = await login({
         email: formData.email,
         password: formData.password,
-        ...(formData.tv_code && { tv_code: formData.tv_code }),
       }).unwrap();
       
       if (result.success && result.data) {
@@ -220,23 +219,32 @@ const Signin: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Password Field */}
+                  {/* Password Field with Show/Hide */}
                   <div className="mb-4">
                     <label className="font-semibold" htmlFor="LoginPassword">
                       Password: <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      id="LoginPassword" 
-                      name="password"
-                      type="password" 
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className={`mt-3 w-full py-2 px-3 h-10 bg-transparent dark:bg-slate-900 dark:text-slate-200 rounded outline-none border ${
-                        errors.password ? 'border-red-500' : 'border-gray-100 dark:border-gray-800'
-                      } focus:ring-0 focus:border-red-500`}
-                      placeholder="Password:"
-                      disabled={isLoading}
-                    />
+                    <div className="relative mt-3">
+                      <input 
+                        id="LoginPassword" 
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className={`w-full py-2 px-3 pr-10 h-10 bg-transparent dark:bg-slate-900 dark:text-slate-200 rounded outline-none border ${
+                          errors.password ? 'border-red-500' : 'border-gray-100 dark:border-gray-800'
+                        } focus:ring-0 focus:border-red-500`}
+                        placeholder="Password:"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        className="absolute right-3 inset-y-0 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     {errors.password && (
                       <p className="text-red-500 text-xs mt-1">{errors.password}</p>
                     )}

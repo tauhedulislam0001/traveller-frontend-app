@@ -31,26 +31,34 @@ import {
 export const Header: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  // State to handle mobile menu toggle
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  // State for dropdowns
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  // Get authentication state from Redux with safe default
+  // Get authentication state from Redux
   const auth = useSelector((state: RootState) => state.auth);
   const isAuthenticated = auth?.isAuthenticated || false;
   const customer = auth?.customer || null;
   
   const [logout] = useLogoutMutation();
 
-  // Theme color
   const themeColor = "#fb2c36";
 
-  // Refs for dropdown containers
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Force re-render when customer changes
+  useEffect(() => {
+    console.log('Header - Customer updated:', {
+      id: customer?.id,
+      name: customer?.full_name,
+      profile_image: customer?.profile_image
+    });
+    // Reset image error when customer changes
+    setImageError(false);
+  }, [customer]);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -66,7 +74,6 @@ export const Header: React.FC = () => {
     if (searchDropdownOpen) setSearchDropdownOpen(false);
   };
 
-  // Handle logout
   const handleLogout = async () => {
     try {
       await logout().unwrap();
@@ -79,7 +86,6 @@ export const Header: React.FC = () => {
     }
   };
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
@@ -100,7 +106,6 @@ export const Header: React.FC = () => {
     e.stopPropagation();
   };
 
-  // Scroll event handler for sticky navbar
   const handleWindowScroll = () => {
     if (
       document.body.scrollTop >= 50 ||
@@ -122,6 +127,13 @@ export const Header: React.FC = () => {
   useEffect(() => {
     handleWindowScroll();
   }, []);
+
+  // Get the profile image URL with fallback
+  const getProfileImage = () => {
+    if (imageError) return "assets/images/client/16.jpg";
+    if (customer?.profile_image) return customer.profile_image;
+    return "assets/images/client/16.jpg";
+  };
 
   return (
     <div>
@@ -187,23 +199,6 @@ export const Header: React.FC = () => {
             <img src="assets/images/logo-white.png" className="hidden dark:inline-block" alt="" />
           </a>
 
-          <div className="menu-extras">
-            <div className="menu-item">
-              <button 
-                className="navbar-toggle" 
-                id="isToggle" 
-                onClick={toggleMenu}
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                {menuOpen ? (
-                  <X className="w-6 h-6 text-slate-900 dark:text-white" />
-                ) : (
-                  <Menu className="w-6 h-6 text-slate-900 dark:text-white" />
-                )}
-              </button>
-            </div>
-          </div>
-
           <ul className="buy-button list-none mb-0">
             {/* Search Dropdown */}
             <li className="dropdown inline-block relative pe-1" ref={searchDropdownRef}>
@@ -241,11 +236,15 @@ export const Header: React.FC = () => {
                   type="button"
                 >
                   <span className="size-8 inline-flex items-center justify-center tracking-wide align-middle duration-500 text-base text-center rounded-md border" style={{ borderColor: themeColor, backgroundColor: themeColor }}>
-                    {customer?.profile_image ? (
-                      <img src={customer.profile_image} className="rounded-md" alt={customer.full_name} />
-                    ) : (
-                      <img src="assets/images/client/16.jpg" className="rounded-md" alt="" />
-                    )}
+                    <img 
+                      src={getProfileImage()} 
+                      className="rounded-md w-full h-full object-cover" 
+                      alt={customer?.full_name || "Profile"}
+                      onError={() => {
+                        console.error('Failed to load profile image:', customer?.profile_image);
+                        setImageError(true);
+                      }}
+                    />
                   </span>
                 </button>
                 <div 

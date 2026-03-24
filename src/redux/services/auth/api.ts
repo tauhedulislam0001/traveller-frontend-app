@@ -139,8 +139,9 @@ export const AuthApi = createApi({
         url: `${Constants.MAIN_URL_API_ENDPOINT}customer/upload-profile-image`,
         method: 'POST',
         body: formData,
+        // Override the base query for this endpoint
         headers: {
-          'Content-Type': 'multipart/form-data',
+          // Empty headers - let the browser set Content-Type
         },
       }),
       invalidatesTags: ["Profile"],
