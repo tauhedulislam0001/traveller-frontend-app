@@ -8,6 +8,7 @@ import { BlogApi } from "./services/blog/api";
 import { TourPackageApi } from "./services/tour_package/api";
 import { AuthApi } from "./services/auth/api";
 import authReducer from "./slices/authSlice"; // Import auth reducer
+import { BookingApi } from "./services/booking/api";
 
 export const store = configureStore({
   reducer: {
@@ -17,13 +18,15 @@ export const store = configureStore({
     [BlogApi.reducerPath]: BlogApi.reducer,
     [TourPackageApi.reducerPath]: TourPackageApi.reducer,
     [AuthApi.reducerPath]: AuthApi.reducer,
+    [BookingApi.reducerPath]: BookingApi.reducer, 
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       pokemonApi.middleware,
       BlogApi.middleware,
       TourPackageApi.middleware,
-      AuthApi.middleware
+      AuthApi.middleware,
+      BookingApi.middleware, 
     ),
 });
 

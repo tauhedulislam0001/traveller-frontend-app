@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/router";
+import { RootState } from "@redux/store";
+import { useStoreBookingMutation } from "@redux/services/booking/api";
+import toast from "react-hot-toast";
 
 interface PricingOption {
     cost_type: string;
@@ -32,6 +37,11 @@ const TourDetailsBookNow: React.FC<Props> = ({
     tourId, 
     tourTitle 
 }) => {
+    const router = useRouter();
+    const dispatch = useDispatch();
+    const { isAuthenticated, customer } = useSelector((state: RootState) => state.auth);
+    const [storeBooking, { isLoading }] = useStoreBookingMutation();
+    
     const [isMounted, setIsMounted] = useState(false);
     const [selectedTourType, setSelectedTourType] = useState<string>('');
     const [selectedGroupSize, setSelectedGroupSize] = useState<number>(0);
@@ -74,7 +84,6 @@ const TourDetailsBookNow: React.FC<Props> = ({
         setSelectedGroupSize(personCount);
         
         if (personCount === -1) {
-            // Custom option selected - use the custom group size value
             handleCustomGroupSizeChange(customGroupSize);
         } else {
             const selectedGroup = groupOptions.find(g => g.person_count === personCount);
@@ -90,10 +99,8 @@ const TourDetailsBookNow: React.FC<Props> = ({
         setCustomGroupSize(newCount);
         setCustomManualInput(newCount.toString());
         
-        // Find the base pricing (use the first group option as reference)
         if (groupOptions.length > 0) {
             const basePricing = groupOptions[0];
-            // Calculate custom price based on per person rate
             const pricePerPerson = basePricing.final_amount;
             const totalPrice = pricePerPerson * newCount;
             
@@ -137,6 +144,86 @@ const TourDetailsBookNow: React.FC<Props> = ({
         }
     };
 
+    // Calculate total amount
+    const getTotalAmount = () => {
+        if (!selectedPricing) return '0.00';
+        
+        if (selectedTourType === 'group_tour') {
+            if (selectedGroupSize === -1) {
+                return selectedPricing.formatted_total || '$0.00';
+            } else if (selectedPricing.total_price) {
+                return selectedPricing.formatted_total || '$0.00';
+            }
+        }
+        
+        const priceNum = selectedPricing.final_amount;
+        return (adultCount * priceNum).toFixed(2);
+    };
+
+    // Get total amount as number
+    const getTotalAmountNumber = () => {
+        if (!selectedPricing) return 0;
+        
+        if (selectedTourType === 'group_tour') {
+            if (selectedGroupSize === -1) {
+                return selectedPricing.total_price || 0;
+            } else if (selectedPricing.total_price) {
+                return selectedPricing.total_price;
+            }
+        }
+        
+        return selectedPricing.final_amount * adultCount;
+    };
+
+    // Check if book button should be enabled
+    const isBookButtonEnabled = () => {
+        return selectedTourType !== '' && selectedPricing !== null && selectedDate !== '' && isAuthenticated;
+    };
+
+    // Handle booking submission using RTK Query
+    const handleBookNow = async () => {
+        if (!isAuthenticated) {
+            toast.error('Please login to book this tour');
+            router.push('/login');
+            return;
+        }
+
+        if (!isBookButtonEnabled()) {
+            toast.error('Please complete all required fields');
+            return;
+        }
+
+        try {
+            const result = await storeBooking({
+                package_id: tourId,
+                tour_start_date: selectedDate,
+                number_of_guests: selectedTourType === 'per_person' ? adultCount : 
+                                  (selectedGroupSize === -1 ? customGroupSize : selectedGroupSize),
+                special_requests: notes,
+            }).unwrap();
+
+            if (result.success) {
+                toast.success('Booking created successfully! A confirmation email has been sent.');
+                
+                // Redirect to booking confirmation or bookings page
+                setTimeout(() => {
+                     // Redirect to profile bookings page
+                    router.push('/profile?tab=bookings');
+                }, 2000);
+            }
+        } catch (error: any) {
+            console.error('Booking error:', error);
+            
+            if (error?.data?.errors) {
+                Object.values(error.data.errors).forEach((err: any) => {
+                    toast.error(err[0]);
+                });
+            } else {
+                toast.error(error?.data?.message || 'Failed to create booking');
+            }
+        }
+    };
+
     if (!isMounted) {
         return (
             <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -148,42 +235,6 @@ const TourDetailsBookNow: React.FC<Props> = ({
             </div>
         );
     }
-
-    // Calculate total amount
-    const getTotalAmount = () => {
-        if (!selectedPricing) return '0.00';
-        
-        if (selectedTourType === 'group_tour') {
-            if (selectedGroupSize === -1) {
-                // Custom group
-                return selectedPricing.formatted_total || '$0.00';
-            } else if (selectedPricing.total_price) {
-                return selectedPricing.formatted_total || '$0.00';
-            }
-        }
-        
-        const priceNum = selectedPricing.final_amount;
-        return `$${(adultCount * priceNum).toFixed(2)}`;
-    };
-
-    // Check if book button should be enabled
-    const isBookButtonEnabled = () => {
-        return selectedTourType !== '' && selectedPricing !== null && selectedDate !== '';
-    };
-
-    // Get price per person display
-    const getPricePerPerson = () => {
-        if (!selectedPricing) return '';
-        return selectedPricing.formatted_final;
-    };
-
-    // Get the base price per person for group tours
-    const getBasePricePerPerson = () => {
-        if (groupOptions.length > 0) {
-            return groupOptions[0].formatted_final;
-        }
-        return '';
-    };
 
     return (
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-24 border border-gray-100">
@@ -201,6 +252,26 @@ const TourDetailsBookNow: React.FC<Props> = ({
 
             {/* Booking Form */}
             <div className="p-6 space-y-5">
+                {/* Authentication Warning */}
+                {!isAuthenticated && (
+                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                        <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <div className="flex-1">
+                                <p className="text-sm text-amber-700">Please login to book this tour</p>
+                            </div>
+                            <button 
+                                onClick={() => router.push('/login')}
+                                className="text-sm text-amber-700 font-semibold hover:text-amber-800"
+                            >
+                                Login
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Tour Type Selection */}
                 <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
@@ -210,6 +281,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                         value={selectedTourType}
                         onChange={(e) => handleTourTypeChange(e.target.value)}
                         className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all cursor-pointer"
+                        disabled={isLoading}
                     >
                         <option value="">Select Tour Type</option>
                         {perPersonOption && (
@@ -221,7 +293,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                     </select>
                 </div>
 
-                {/* Group Size Selection (only for group tours) */}
+                {/* Group Size Selection */}
                 {selectedTourType === 'group_tour' && groupOptions.length > 0 && (
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700">
@@ -231,6 +303,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                             value={selectedGroupSize}
                             onChange={(e) => handleGroupSizeChange(Number(e.target.value))}
                             className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all cursor-pointer"
+                            disabled={isLoading}
                         >
                             {groupOptions.map((option) => (
                                 <option key={option.person_count} value={option.person_count || 0}>
@@ -241,7 +314,6 @@ const TourDetailsBookNow: React.FC<Props> = ({
                             <option value="-1">Custom</option>
                         </select>
                         
-                        {/* Custom Group Size Input */}
                         {selectedGroupSize === -1 && (
                             <div className="mt-3">
                                 <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
@@ -250,7 +322,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                                             <button 
                                                 onClick={() => handleCustomGroupSizeChange(customGroupSize - 1)} 
                                                 className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
-                                                disabled={customGroupSize <= 1}
+                                                disabled={customGroupSize <= 1 || isLoading}
                                             >
                                                 <span className="text-xl font-medium">−</span>
                                             </button>
@@ -259,10 +331,12 @@ const TourDetailsBookNow: React.FC<Props> = ({
                                                 value={customManualInput}
                                                 onChange={handleCustomManualInput}
                                                 className="w-20 text-center font-semibold text-lg text-gray-900 bg-transparent focus:outline-none"
+                                                disabled={isLoading}
                                             />
                                             <button 
                                                 onClick={() => handleCustomGroupSizeChange(customGroupSize + 1)} 
                                                 className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
+                                                disabled={isLoading}
                                             >
                                                 <span className="text-xl font-medium">+</span>
                                             </button>
@@ -271,9 +345,6 @@ const TourDetailsBookNow: React.FC<Props> = ({
                                             Total: ${(selectedPricing?.final_amount || 0 * customGroupSize).toFixed(2)}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-2">
-                                        Base price per person: {getBasePricePerPerson()}
-                                    </p>
                                 </div>
                             </div>
                         )}
@@ -310,7 +381,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                     </div>
                 )}
 
-                {/* Adult Counter (only for per person tours) */}
+                {/* Adult Counter */}
                 {selectedTourType === 'per_person' && (
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-700">
@@ -322,7 +393,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                                     <button 
                                         onClick={() => handleAdultCountChange(adultCount - 1)} 
                                         className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
-                                        disabled={adultCount <= 1}
+                                        disabled={adultCount <= 1 || isLoading}
                                     >
                                         <span className="text-xl font-medium">−</span>
                                     </button>
@@ -331,10 +402,12 @@ const TourDetailsBookNow: React.FC<Props> = ({
                                         value={manualInputValue}
                                         onChange={handleManualInput}
                                         className="w-20 text-center font-semibold text-lg text-gray-900 bg-transparent focus:outline-none"
+                                        disabled={isLoading}
                                     />
                                     <button 
                                         onClick={() => handleAdultCountChange(adultCount + 1)} 
                                         className="w-10 h-10 bg-white rounded-xl border border-gray-200 hover:border-custom-red hover:text-custom-red transition-all flex items-center justify-center shadow-sm"
+                                        disabled={isLoading}
                                     >
                                         <span className="text-xl font-medium">+</span>
                                     </button>
@@ -359,10 +432,11 @@ const TourDetailsBookNow: React.FC<Props> = ({
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all cursor-pointer"
                         min={new Date().toISOString().split('T')[0]}
+                        disabled={isLoading}
                     />
                 </div>
 
-                {/* Notes Field - For both per person and group tours */}
+                {/* Notes Field */}
                 <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
                         Special Requests / Notes
@@ -373,6 +447,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                         rows={3}
                         className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-custom-red focus:ring-2 focus:ring-custom-red/20 transition-all resize-none"
                         placeholder="Any special requests or notes for your tour..."
+                        disabled={isLoading}
                     />
                 </div>
 
@@ -382,7 +457,7 @@ const TourDetailsBookNow: React.FC<Props> = ({
                         <div className="flex justify-between items-center">
                             <span className="text-base font-semibold text-gray-900">Total Amount</span>
                             <span className="text-2xl font-bold text-custom-red">
-                                {getTotalAmount()}
+                                ${getTotalAmount()}
                             </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Includes all taxes & fees</p>
@@ -391,24 +466,39 @@ const TourDetailsBookNow: React.FC<Props> = ({
 
                 {/* Book Now Button */}
                 <button 
-                    disabled={!isBookButtonEnabled()}
+                    onClick={handleBookNow}
+                    disabled={!isBookButtonEnabled() || isLoading}
                     className={`w-full py-4 bg-gradient-to-r from-custom-red to-red-600 text-white font-semibold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-custom-red/20 flex items-center justify-center gap-2 group ${
-                        !isBookButtonEnabled() ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''
+                        (!isBookButtonEnabled() || isLoading) ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''
                     }`}
                 >
-                    <span>Book Now{selectedPricing ? ` - ${getTotalAmount()}` : ''}</span>
-                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
+                    {isLoading ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Processing...</span>
+                        </>
+                    ) : (
+                        <>
+                            <span>Book Now{selectedPricing ? ` - $${getTotalAmount()}` : ''}</span>
+                            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </>
+                    )}
                 </button>
                 
                 {/* Validation Messages */}
-                {!selectedTourType && (
+                {!isAuthenticated && (
+                    <p className="text-xs text-amber-600 text-center">
+                        Please login to book this tour
+                    </p>
+                )}
+                {isAuthenticated && !selectedTourType && (
                     <p className="text-xs text-amber-600 text-center">
                         Please select a tour type to continue
                     </p>
                 )}
-                {selectedTourType && !selectedDate && (
+                {isAuthenticated && selectedTourType && !selectedDate && (
                     <p className="text-xs text-amber-600 text-center">
                         Please select a travel date to continue
                     </p>
