@@ -12,14 +12,16 @@ import Testimonial from "@components/main/sections/Testimonial/testimonial";
 import BlogSection from "@components/main/sections/blog/blog_section";
 import { BlogFeatureResponse } from "@redux/services/blog/type";
 import { TourPackageFeatureResponse, TourPackageTopDestinationResponse, TourPackage as TourPackageType } from "@redux/services/tour_package/type";
+import { CustomerReviewListResponse } from "@redux/services/customer_review/type";
 
 interface LandingProps {
     blogFeaturedData?: BlogFeatureResponse;
     tourFeaturedData?: TourPackageFeatureResponse;
     tourTopDestinationData?: TourPackageTopDestinationResponse;
+    reviewsData?: CustomerReviewListResponse; // You can replace 'any' with the actual type if you have it defined
 }
 
-const Landing: React.FC<LandingProps> = ({ blogFeaturedData, tourFeaturedData, tourTopDestinationData }) => {
+const Landing: React.FC<LandingProps> = ({ blogFeaturedData, tourFeaturedData, tourTopDestinationData, reviewsData }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [searchResults, setSearchResults] = useState<TourPackageType[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -173,7 +175,7 @@ const Landing: React.FC<LandingProps> = ({ blogFeaturedData, tourFeaturedData, t
           <Destination data={tourTopDestinationData}/>
           <TourPackage data={tourFeaturedData}/>
           <AboutSection />        
-          <Testimonial />
+          <Testimonial data={reviewsData} />
           <BlogSection data={blogFeaturedData} />
         </section>
       )}

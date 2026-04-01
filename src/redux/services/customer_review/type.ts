@@ -2,7 +2,7 @@ export type CustomerReview = {
     id: number;
     full_name: string;
     email: string;
-    rating: number;
+    rating: number | string;
     review_type: string;
     review_type_id: number;
     review: string;
@@ -12,9 +12,7 @@ export type CustomerReview = {
 };
 
 export type CustomerReviewListResponse = {
-    status: number;
     success: boolean;
-    message: string;
     data: CustomerReview[];
 }
 
