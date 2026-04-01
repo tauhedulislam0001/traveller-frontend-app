@@ -9,6 +9,7 @@ import { TourPackageApi } from "./services/tour_package/api";
 import { AuthApi } from "./services/auth/api";
 import authReducer from "./slices/authSlice"; // Import auth reducer
 import { BookingApi } from "./services/booking/api";
+import { CustomerReviewApi } from "./services/customer_review/api";
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     [TourPackageApi.reducerPath]: TourPackageApi.reducer,
     [AuthApi.reducerPath]: AuthApi.reducer,
     [BookingApi.reducerPath]: BookingApi.reducer, 
+    [CustomerReviewApi.reducerPath]: CustomerReviewApi.reducer, // Add CustomerReviewApi reducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -27,6 +29,7 @@ export const store = configureStore({
       TourPackageApi.middleware,
       AuthApi.middleware,
       BookingApi.middleware, 
+      CustomerReviewApi.middleware,
     ),
 });
 

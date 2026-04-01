@@ -570,7 +570,7 @@ export const TourDetails: React.FC<TourDetailsProps> = ({ tourData }) => {
                         {/* Reviews */}
                         <div className="bg-white rounded-xl border border-gray-100 p-6">
                             <h3 className="text-lg font-semibold text-gray-900 mb-6">Reviews</h3>
-                            <TourDetailComments tourId={tourData.id} />
+                            <TourDetailComments type="tour_package" id={tourData.id} />
                         </div>
                     </div>
 

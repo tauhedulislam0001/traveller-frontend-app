@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import TourDetailComments from "@components/tour-details/section/tour_details_comments/TourDetailComments";
 
 interface BlogContentProps {
   blogData?: {
@@ -28,6 +29,7 @@ function BlogContent({ blogData }: BlogContentProps) {
 
   // Use real data or fallback to dummy data
   const blogDetails = blogData ? {
+    id: blogData.id,
     title: blogData.title,
     category: blogData.category_name || "Uncategorized",
     image: blogData.featured_image || blogData.feature_image,
@@ -40,6 +42,7 @@ function BlogContent({ blogData }: BlogContentProps) {
     // HTML content for rendering
     htmlContent: blogData.description || "",
   } : {
+    id: 0,
     title: "Traveller Visiting Ice Cave With Amazing Eye-catching Scenes",
     category: "Photography",
     image: "/assets/images/blog/9.jpg",
@@ -60,10 +63,6 @@ function BlogContent({ blogData }: BlogContentProps) {
   // Function to clean up and sanitize HTML (optional)
   const cleanHtml = (html: string) => {
     if (!html) return '';
-    
-    // Remove duplicate content if needed - you might want to implement logic here
-    // For now, just return the HTML
-    
     return html;
   };
 
@@ -175,65 +174,36 @@ function BlogContent({ blogData }: BlogContentProps) {
         }
       `}</style>
 
-      {/* Comment Form */}
-      <div className="mt-12 p-6 rounded-xl shadow-lg dark:shadow-gray-800 border border-gray-200 dark:border-slate-700">
-        <h5 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-          Leave A Comment:
-        </h5>
-
-        <form className="space-y-6">
-          <div className="grid lg:grid-cols-12 lg:gap-6">
-            <div className="lg:col-span-6">
-              <div className="text-left">
-                <label htmlFor="name" className="font-semibold text-slate-900 dark:text-white block mb-2">
-                  Your Name:
-                </label>
-                <input 
-                  id="name" 
-                  type="text" 
-                  className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300"
-                  placeholder="Name"
-                />
-              </div>
-            </div>
-
-            <div className="lg:col-span-6">
-              <div className="text-left">
-                <label htmlFor="email" className="font-semibold text-slate-900 dark:text-white block mb-2">
-                  Your Email:
-                </label>
-                <input 
-                  id="email" 
-                  type="email" 
-                  className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300"
-                  placeholder="Email"
-                />
-              </div>
+      {/* Author Bio Section */}
+      {blogData && (
+        <div className="mt-12 p-6 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+          <div className="flex items-center gap-4">
+            <img 
+              src={blogDetails.authorImage} 
+              alt={blogDetails.author} 
+              className="w-16 h-16 rounded-full object-cover"
+            />
+            <div>
+              <h5 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {blogDetails.author}
+              </h5>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {blogDetails.authorRole || "Content Writer"}
+              </p>
             </div>
           </div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">
+            {blogDetails.authorBio}
+          </p>
+        </div>
+      )}
 
-          <div>
-            <div className="text-left">
-              <label htmlFor="comments" className="font-semibold text-slate-900 dark:text-white block mb-2">
-                Your Comment:
-              </label>
-              <textarea 
-                id="comments" 
-                className="w-full px-4 py-3 bg-transparent dark:bg-slate-900 text-slate-900 dark:text-slate-200 rounded-lg outline-none border border-gray-200 dark:border-slate-700 focus:border-[#fb2c36] focus:ring-2 focus:ring-[#fb2c36]/20 transition-all duration-300 h-36"
-                placeholder="Your comment..."
-              ></textarea>
-            </div>
-          </div>
-          
-          <button 
-            type="submit" 
-            className="w-full py-3 px-5 font-semibold rounded-lg transition-all duration-300 hover:shadow-lg"
-            style={{ backgroundColor: themeColor, color: 'white' }}
-          >
-            Send Message
-          </button>
-        </form>
-      </div>
+      {/* Blog Reviews Section - Using TourDetailComments with type="blog" */}
+      {blogData && blogData.id > 0 && (
+        <div className="mt-12">
+          <TourDetailComments type="blog" id={blogData.id} />
+        </div>
+      )}
     </div>
   );
 }
