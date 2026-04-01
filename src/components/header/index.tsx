@@ -297,6 +297,7 @@ export const Header: React.FC = () => {
               <li><Link href="/" className="sub-menu-item hover:text-[#fb2c36]">Home</Link></li>
               <li><Link href="/tour-package" className="sub-menu-item hover:text-[#fb2c36]">Tour Package</Link></li>
               <li><Link href="/blog" className="sub-menu-item hover:text-[#fb2c36]">Blog</Link></li>
+              <li><Link href="/services" className="sub-menu-item hover:text-[#fb2c36]">Services</Link></li>
               <li><Link href="/aboutus" className="sub-menu-item hover:text-[#fb2c36]">About Us</Link></li>
               <li><Link href="/contact" className="sub-menu-item hover:text-[#fb2c36]">Contact Us</Link></li>
               {!isAuthenticated && (
