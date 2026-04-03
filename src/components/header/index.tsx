@@ -295,6 +295,7 @@ export const Header: React.FC = () => {
           <div id="navigation" className={menuOpen ? "block" : "hidden md:block"}>
             <ul className="navigation-menu nav-right !justify-end nav-light">
               <li><Link href="/" className="sub-menu-item hover:text-[#fb2c36]">Home</Link></li>
+              <li><Link href="/about-bangladesh" className="sub-menu-item hover:text-[#fb2c36]">About Bangladesh</Link></li>
               <li><Link href="/tour-package" className="sub-menu-item hover:text-[#fb2c36]">Tour Package</Link></li>
               <li><Link href="/blog" className="sub-menu-item hover:text-[#fb2c36]">Blog</Link></li>
               <li><Link href="/services" className="sub-menu-item hover:text-[#fb2c36]">Services</Link></li>
